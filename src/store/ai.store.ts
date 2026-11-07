@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '../config/api';
+import { useAuthStore } from './auth.store';
 
 export interface ChatMessage {
   id: string;
@@ -8,56 +10,161 @@ export interface ChatMessage {
   date: string;
 }
 
+interface SendMessageResult {
+  success: boolean;
+  message?: string;
+}
+
 interface AIState {
   messages: ChatMessage[];
-  sendMessage: (text: string) => Promise<void>;
+  activeUserId: string | null;
+  sendMessage: (text: string) => Promise<SendMessageResult>;
   loadMessages: () => Promise<void>;
 }
 
-const KB: Record<string, string> = {
-  tension: "Une tension artérielle normale se situe entre 90/60 et 120/80 mmHg. Si elle dépasse 140/90, consultez un médecin.",
-  pression: "Une tension artérielle normale se situe entre 90/60 et 120/80 mmHg.",
-  diabète: "La glycémie à jeun doit être entre 0,7 et 1,1 g/L. Au-delà, il s'agit d'une hyperglycémie.",
-  glycémie: "La glycémie à jeun normale est de 0,7 à 1,1 g/L. Surveillez votre alimentation si elle est élevée.",
-  coeur: "La fréquence cardiaque au repos est normalement entre 60 et 100 bpm.",
-  poids: "Un IMC normal se situe entre 18,5 et 25. Calculez : poids (kg) / taille² (m²).",
-  sommeil: "Un adulte a besoin de 7 à 9 heures de sommeil par nuit pour être en bonne santé.",
-  mal: "Pour les maux de tête, hydratez-vous et reposez-vous. Si la douleur persiste, consultez.",
-};
+const getStorageKey = (userId: string) => `ai_messages_${userId}`;
+
+const isValidHistory = (value: unknown): value is ChatMessage[] =>
+  Array.isArray(value) &&
+  value.every(
+    (message) =>
+      message &&
+      typeof message.id === 'string' &&
+      ['user', 'assistant'].includes(message.role) &&
+      typeof message.content === 'string' &&
+      typeof message.date === 'string'
+  );
+
+const API_URL = `${API_ENDPOINTS.ai}/chat`;
 
 export const useAIStore = create<AIState>((set, get) => ({
   messages: [],
+  activeUserId: null,
 
   sendMessage: async (text) => {
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, date: new Date().toISOString() };
-    set({ messages: [...get().messages, userMsg] });
+    const content = text.trim();
 
-    await new Promise(r => setTimeout(r, 1200));
+    if (!content) {
+      return { success: false, message: 'Veuillez saisir un message.' };
+    }
 
-    const lower = text.toLowerCase();
-    let botResponse = "Je suis votre assistant MediNova. Je ne remplace pas un médecin, mais je peux vous donner des infos générales. Consultez un professionnel pour tout symptôme inquiétant.";
+    const user = useAuthStore.getState().user;
 
-    for (const key in KB) {
-      if (lower.includes(key)) {
-        botResponse = KB[key];
-        break;
+    if (!user?.token) {
+      return { success: false, message: 'Votre session a expiré. Veuillez vous reconnecter.' };
+    }
+
+    try {
+      let currentMessages = get().messages;
+
+      if (get().activeUserId !== user._id) {
+        const stored = await AsyncStorage.getItem(getStorageKey(user._id));
+        const parsed: unknown = stored ? JSON.parse(stored) : [];
+        currentMessages = isValidHistory(parsed) ? parsed : [];
+
+        if (useAuthStore.getState().user?._id !== user._id) {
+          return { success: false, message: 'Le compte actif a changé.' };
+        }
+
+        set({ messages: currentMessages, activeUserId: user._id });
       }
-    }
 
-    if (lower.includes('bonjour') || lower.includes('salut')) {
-      botResponse = "Bonjour ! Comment puis-je vous aider aujourd'hui concernant votre santé ?";
-    }
+      const userMessage: ChatMessage = {
+        id: `${Date.now()}-user`,
+        role: 'user',
+        content,
+        date: new Date().toISOString(),
+      };
 
-    const botMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content: botResponse, date: new Date().toISOString() };
-    const newMessages = [...get().messages, botMsg];
-    set({ messages: newMessages });
-    await AsyncStorage.setItem('ai_messages', JSON.stringify(newMessages));
+      const conversation = [...currentMessages, userMessage];
+
+      set({ messages: conversation, activeUserId: user._id });
+      await AsyncStorage.setItem(getStorageKey(user._id), JSON.stringify(conversation));
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          messages: conversation.slice(-20).map(({ role, content }) => ({
+            role,
+            content,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || 'Impossible de contacter MediNova IA.',
+        };
+      }
+
+      if (typeof data.reply !== 'string' || !data.reply.trim()) {
+        return {
+          success: false,
+          message: 'Le serveur a retourné une réponse invalide.',
+        };
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: `${Date.now()}-assistant`,
+        role: 'assistant',
+        content: data.reply.trim(),
+        date: new Date().toISOString(),
+      };
+
+      if (useAuthStore.getState().user?._id !== user._id) {
+        return { success: false, message: 'Le compte actif a changé.' };
+      }
+
+      const updatedMessages = [...get().messages, assistantMessage];
+
+      set({ messages: updatedMessages, activeUserId: user._id });
+      await AsyncStorage.setItem(getStorageKey(user._id), JSON.stringify(updatedMessages));
+
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        message: 'Erreur réseau. Vérifiez votre connexion et réessayez.',
+      };
+    }
   },
 
   loadMessages: async () => {
+    const user = useAuthStore.getState().user;
+
+    if (!user?._id) {
+      set({ messages: [], activeUserId: null });
+      return;
+    }
+
     try {
-      const stored = await AsyncStorage.getItem('ai_messages');
-      if (stored) set({ messages: JSON.parse(stored) });
-    } catch (e) { console.error(e); }
+      const stored = await AsyncStorage.getItem(getStorageKey(user._id));
+      const parsed: unknown = stored ? JSON.parse(stored) : [];
+      const messages = isValidHistory(parsed) ? parsed : [];
+
+      // Ignore stale results if another account became active during the read.
+      if (useAuthStore.getState().user?._id !== user._id) return;
+
+      set({ messages, activeUserId: user._id });
+    } catch (error) {
+      console.error('Failed to load AI chat history:', error);
+      if (useAuthStore.getState().user?._id === user._id) {
+        set({ messages: [], activeUserId: user._id });
+      }
+    }
   },
 }));
+
+// Never keep one account's conversation visible after authentication changes.
+useAuthStore.subscribe((state, previousState) => {
+  if (state.user?._id !== previousState.user?._id) {
+    useAIStore.setState({ messages: [], activeUserId: null });
+  }
+});

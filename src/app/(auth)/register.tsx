@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Keyboard, TouchableWithoutFeedback,
   Animated, Easing, Dimensions, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -90,8 +90,9 @@ export default function Register() {
         <View style={[styles.orb, { top: -90, left: -70, width: 260, height: 260 }]} />
         <View style={[styles.orb, { bottom: 40, right: -100, width: 280, height: 280, opacity: 0.35 }]} />
 
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <TouchableOpacity style={styles.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={22} color={colors.primaryDark} />
             </TouchableOpacity>
@@ -142,6 +143,7 @@ export default function Register() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </LinearGradient>
     </SafeAreaView>
   );

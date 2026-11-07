@@ -348,7 +348,7 @@ export default function Profile() {
 
   return (
     <View style={[styles.container, isDark && { backgroundColor: '#0A140F' }]}>
-      <LinearGradient colors={isDark ? ['#0A140F', '#13271D', '#0A140F'] : ['#EAF0E8', '#D8E2D5', '#C8D6C4']} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={isDark ? ['#0A140F', '#13271D', '#0A140F'] : ['#EAF0E8', '#D8E2D5', '#C8D6C4']} style={StyleSheet.absoluteFill} />
       <View style={[styles.orb, { top: -100, right: -80 }]} />
 
       {isOffline && (

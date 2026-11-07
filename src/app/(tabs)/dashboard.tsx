@@ -308,7 +308,7 @@ export default function Dashboard() {
           </AnimatedView>
 
           <AnimatedView delay={230} animation="up">
-            <TouchableOpacity style={styles.emergencyBtn} onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.9}>
+            <TouchableOpacity style={styles.emergencyBtn} onPress={() => router.push('/urgency')} activeOpacity={0.9}>
               <LinearGradient colors={['#E53E3E', '#C53030']} style={styles.emergencyGradient}>
                 <Ionicons name="alert-circle" size={20} color="#FFF" />
                 <Text style={styles.emergencyText}>URGENCE</Text>

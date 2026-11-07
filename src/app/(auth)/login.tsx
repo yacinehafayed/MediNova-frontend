@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Keyboard, TouchableWithoutFeedback,
   Animated, Easing, Dimensions, Pressable, Modal, Alert, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -273,15 +273,16 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" />
 
       <LinearGradient colors={gradients.background} style={styles.flex}>
         <FloatingOrb style={{ top: -80, right: -60, width: 260, height: 260 }} duration={5200} dx={-30} dy={40} />
         <FloatingOrb style={{ bottom: 80, left: -100, width: 280, height: 280, opacity: 0.35 }} duration={6400} dx={40} dy={-30} delay={600} />
         {PARTICLES.map((p, i) => <Particle key={i} {...p} />)}
 
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
 
             <View style={styles.logoWrap}>
               <AnimatedLogo visible={logoVisible} />
@@ -341,6 +342,7 @@ export default function Login() {
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </LinearGradient>
 
 

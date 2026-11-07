@@ -13,10 +13,10 @@ export default function AnimatedView({ children, delay = 0, style, animation = '
   let entering;
 
   switch (animation) {
-    case 'up': entering = FadeInUp.delay(delay).springify().damping(12); break;
+    case 'up': entering = FadeInUp.delay(delay).duration(350); break;
     case 'fade': entering = FadeIn.delay(delay).duration(600); break;
-    case 'zoom': entering = ZoomIn.delay(delay).springify().damping(12); break;
-    default: entering = FadeInDown.delay(delay).springify().damping(12);
+    case 'zoom': entering = ZoomIn.delay(delay).duration(350); break;
+    default: entering = FadeInDown.delay(delay).duration(350);
   }
 
   return (

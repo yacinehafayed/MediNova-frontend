@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Animated, Dimensions
+  KeyboardAvoidingView, Platform, Animated, Dimensions, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,20 +9,24 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, gradients, radius, shadows, spacing, typography } from '@/constants/theme';
 import { useAIStore } from '@/store/ai.store';
+import { useAuthStore } from '@/store/auth.store';
 
 const { width } = Dimensions.get('window');
 
 export default function Assistant() {
   const { messages = [], sendMessage, loadMessages } = useAIStore();
+  const userId = useAuthStore((state) => state.user?._id);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (loadMessages) loadMessages();
+    loadMessages();
+  }, [loadMessages, userId]);
 
+  useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.3, duration: 1000, useNativeDriver: true }),
@@ -33,14 +37,24 @@ export default function Assistant() {
 
   const handleSend = async (text?: string) => {
     const messageToSend = text || input;
-    if (!messageToSend.trim()) return;
+    if (!messageToSend.trim() || isTyping) return;
 
     setInput('');
     setIsTyping(true);
-    if (sendMessage) await sendMessage(messageToSend);
-    setIsTyping(false);
 
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+    try {
+      const result = await sendMessage(messageToSend);
+
+      if (!result.success) {
+        Alert.alert('MediNova IA', result.message || 'Une erreur est survenue.');
+      }
+
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+    } catch {
+      Alert.alert('MediNova IA', 'Une erreur inattendue est survenue.');
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const suggestions = [
@@ -80,6 +94,7 @@ export default function Assistant() {
             ref={scrollRef}
             contentContainerStyle={styles.scroll}
             showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           >
             {(!messages || messages.length === 0) && (
               <View style={styles.welcomeContainer}>

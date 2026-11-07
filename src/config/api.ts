@@ -19,4 +19,5 @@ export const API_ENDPOINTS = {
   medications: `${API_URL}/medications`,
   notifications: `${API_URL}/notifications`,
   reports: `${API_URL}/reports`,
+  ai: `${API_URL}/ai`,
 };

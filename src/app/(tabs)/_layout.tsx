@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const isDark = useThemeStore((s) => s.isDark);
-  const bottomInset = insets.bottom > 0 ? insets.bottom + 10 : 20;
+  const bottomInset = 0;
 
   return (
     <Tabs
@@ -34,9 +34,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={focused ? colors.textOnDark : color} />
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={focused ? colors.textOnDark : (isDark ? '#5A7A63' : colors.textMuted)} />
             </View>
           ),
         }}
@@ -44,9 +44,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="health"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name={focused ? 'heart' : 'heart-outline'} size={22} color={focused ? colors.textOnDark : color} />
+              <Ionicons name={focused ? 'heart' : 'heart-outline'} size={22} color={focused ? colors.textOnDark : (isDark ? '#5A7A63' : colors.textMuted)} />
             </View>
           ),
         }}
@@ -54,9 +54,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="appointments"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={focused ? colors.textOnDark : color} />
+              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={focused ? colors.textOnDark : (isDark ? '#5A7A63' : colors.textMuted)} />
             </View>
           ),
         }}
@@ -64,9 +64,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="assistant"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={focused ? colors.textOnDark : color} />
+              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={focused ? colors.textOnDark : (isDark ? '#5A7A63' : colors.textMuted)} />
             </View>
           ),
         }}
@@ -74,9 +74,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={focused ? colors.textOnDark : color} />
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={focused ? colors.textOnDark : (isDark ? '#5A7A63' : colors.textMuted)} />
             </View>
           ),
         }}
@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     height: 62,
-    elevation: 0,
     borderRadius: 32,
     ...shadows.strong,
+    elevation: 0,
     paddingTop: 0,
     paddingBottom: 0,
     justifyContent: 'center',

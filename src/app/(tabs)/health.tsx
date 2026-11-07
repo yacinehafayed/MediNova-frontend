@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Modal, TextInput, Alert as RNAlert, Dimensions, Platform, ActivityIndicator
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TouchableWithoutFeedback,
+  Keyboard, Modal, TextInput, Alert as RNAlert, Dimensions, Platform, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -39,19 +39,30 @@ export default function Health() {
   }, []);
 
   const handleAdd = async () => {
-    if (!inputValue) return RNAlert.alert('Erreur', 'Veuillez entrer une valeur.');
-    const numValue = parseFloat(inputValue.replace(',', '.'));
-    if (isNaN(numValue)) return RNAlert.alert('Erreur', 'Veuillez entrer un nombre valide.');
-
     const config = METRICS[activeMetric] || METRICS.heart_rate;
-    const result = await addMeasurement({ type: activeMetric, value: numValue, unit: config.unit });
+
+    if (!inputValue.trim()) {
+      return RNAlert.alert('Erreur', 'Veuillez entrer une valeur.');
+    }
+
+    const numValue = Number(inputValue.replace(',', '.'));
+
+    if (!Number.isFinite(numValue) || numValue <= 0) {
+      return RNAlert.alert('Erreur', 'Veuillez entrer un nombre valide.');
+    }
+
+    const result = await addMeasurement({
+      type: activeMetric,
+      value: numValue,
+      unit: config.unit,
+    });
 
     if (result.success) {
       setInputValue('');
       setModalVisible(false);
       RNAlert.alert('Succès', 'Mesure ajoutée avec succès.');
     } else {
-      RNAlert.alert('Erreur', result.message || 'Impossible d\'ajouter la mesure.');
+      RNAlert.alert('Erreur', result.message || 'Impossible d’ajouter la mesure.');
     }
   };
 
@@ -67,14 +78,17 @@ export default function Health() {
   };
 
 
-  const filteredData = measurements.filter(m => m.type === activeMetric).slice(0, 7).reverse();
-  const chartData = filteredData.map(m => ({ value: m.value }));
-  if (chartData.length === 0) {
-    chartData.push({ value: 70 }, { value: 75 }, { value: 72 }, { value: 80 }, { value: 68 });
-  }
+  const metricMeasurements = measurements.filter(m => m.type === activeMetric);
+  const filteredData = metricMeasurements.slice(0, 7).reverse();
 
+  const chartData = filteredData
+    .filter(m => m.value != null)
+    .map(m => ({ value: m.value! }));
 
-  const values = filteredData.map(m => m.value);
+  const values = filteredData
+    .map(m => m.value)
+    .filter((value): value is number => value != null);
+
   const min = values.length ? Math.min(...values) : 0;
   const max = values.length ? Math.max(...values) : 0;
   const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
@@ -140,44 +154,53 @@ export default function Health() {
                 </View>
               </View>
 
-              <LineChart
-                data={chartData}
-                width={width - 100}
-                height={180}
-                color={currentConfig.color}
-                thickness={4}
-                hideDataPoints={false}
-                dataPointsColor={currentConfig.color}
-                dataPointsRadius={4}
-                curved
-                areaChart
-                startFillColor={currentConfig.color}
-                endFillColor={currentConfig.color}
-                startOpacity={0.3}
-                endOpacity={0.01}
-                yAxisColor="transparent"
-                xAxisColor="transparent"
-                hideRules
-                spacing={(width - 100) / chartData.length}
-                initialSpacing={20}
-              />
-
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Min</Text>
-                  <Text style={styles.statValue}>{min.toFixed(0)}</Text>
+              {chartData.length === 0 ? (
+                <View style={{ height: 180, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={styles.statLabel}>
+                    Aucune mesure enregistrée pour {currentConfig.label.toLowerCase()}.
+                  </Text>
                 </View>
-                <View style={[styles.statDivider]} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Moyenne</Text>
-                  <Text style={[styles.statValue, { color: currentConfig.color }]}>{avg.toFixed(0)}</Text>
-                </View>
-                <View style={[styles.statDivider]} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Max</Text>
-                  <Text style={styles.statValue}>{max.toFixed(0)}</Text>
-                </View>
-              </View>
+              ) : (
+                <>
+                  <LineChart
+                    data={chartData}
+                    width={width - 100}
+                    height={180}
+                    color={currentConfig.color}
+                    thickness={4}
+                    hideDataPoints={false}
+                    dataPointsColor={currentConfig.color}
+                    dataPointsRadius={4}
+                    curved
+                    areaChart
+                    startFillColor={currentConfig.color}
+                    endFillColor={currentConfig.color}
+                    startOpacity={0.3}
+                    endOpacity={0.01}
+                    yAxisColor="transparent"
+                    xAxisColor="transparent"
+                    hideRules
+                    spacing={(width - 100) / chartData.length}
+                    initialSpacing={20}
+                  />
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Min</Text>
+                      <Text style={styles.statValue}>{min.toFixed(0)}</Text>
+                    </View>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Moyenne</Text>
+                      <Text style={[styles.statValue, { color: currentConfig.color }]}>{avg.toFixed(0)}</Text>
+                    </View>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Max</Text>
+                      <Text style={styles.statValue}>{max.toFixed(0)}</Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </BlurView>
           </AnimatedView>
 
@@ -216,7 +239,9 @@ export default function Health() {
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', marginRight: 12 }}>
-                      <Text style={[styles.listValue, { color: config.color }]}>{m.value}</Text>
+                      <Text style={[styles.listValue, { color: config.color }]}>
+                        {m.value}
+                      </Text>
                       <Text style={styles.listUnit}>{m.unit}</Text>
                     </View>
                     <TouchableOpacity onPress={() => handleDelete(m._id)} style={styles.deleteBtn}>
@@ -235,7 +260,8 @@ export default function Health() {
             <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setModalVisible(false)} />
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
 
-            <View style={styles.modalContent}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modalContent}>
               <View style={styles.sheetHandle} />
               <Text style={styles.modalTitle}>Nouvelle mesure</Text>
               <Text style={styles.modalSubtitle}>Ajoutez une mesure à votre suivi.</Text>
@@ -282,7 +308,8 @@ export default function Health() {
               <TouchableOpacity style={styles.modalClose} onPress={() => setModalVisible(false)}>
                 <Text style={styles.modalCloseText}>Annuler</Text>
               </TouchableOpacity>
-            </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
         </Modal>
       </LinearGradient>

@@ -48,6 +48,27 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
       const statsHtml = Object.keys(report.stats).map(type => {
         const s = report.stats[type];
         const meta = METRIC_LABELS[type] || { label: type, color: '#2F4A35' };
+
+        const renderValues = (
+          label: string,
+          values: { min: number; avg: number; max: number },
+          color: string
+        ) => `
+          <div class="stat-values">
+            <strong>${label}</strong>
+            <div><span>Min</span><strong>${values.min.toFixed(1)}</strong></div>
+            <div><span>Moyenne</span><strong style="color:${color}">${values.avg.toFixed(1)}</strong></div>
+            <div><span>Max</span><strong>${values.max.toFixed(1)}</strong></div>
+          </div>
+        `;
+
+        const valuesHtml = type === 'blood_pressure'
+          ? `
+            ${s.systolic ? renderValues('Systolique', s.systolic, '#E67E22') : ''}
+            ${s.diastolic ? renderValues('Diastolique', s.diastolic, '#4A7BEB') : ''}
+          `
+          : renderValues('', { min: s.min!, avg: s.avg!, max: s.max! }, meta.color);
+
         return `
           <div class="stat-card">
             <div class="stat-header">
@@ -55,11 +76,7 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
               <strong>${meta.label}</strong>
               <span class="stat-count">${s.count} mesures</span>
             </div>
-            <div class="stat-values">
-              <div><span>Min</span><strong>${s.min.toFixed(1)}</strong></div>
-              <div><span>Moyenne</span><strong style="color:${meta.color}">${s.avg.toFixed(1)}</strong></div>
-              <div><span>Max</span><strong>${s.max.toFixed(1)}</strong></div>
-            </div>
+            ${valuesHtml}
             <p class="stat-unit">Unité : ${s.unit}</p>
           </div>
         `;
@@ -417,20 +434,89 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
                         <Text style={styles.statLabel}>{meta.label}</Text>
                         <Text style={styles.statCount}>{stat.count} mesures</Text>
                       </View>
-                      <View style={styles.statRow}>
-                        <View style={styles.statBox}>
-                          <Text style={styles.statBoxLabel}>Min</Text>
-                          <Text style={styles.statBoxValue}>{stat.min.toFixed(1)}</Text>
+                      {type === 'blood_pressure' ? (
+                        <>
+                          {stat.systolic && (
+                            <>
+                              <Text style={[styles.statLabel, { color: '#E67E22' }]}>Systolique</Text>
+                              <View style={styles.statRow}>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Min</Text>
+                                  <Text style={styles.statBoxValue}>{stat.systolic.min.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Moyenne</Text>
+                                  <Text style={[styles.statBoxValue, { color: '#E67E22' }]}>{stat.systolic.avg.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Max</Text>
+                                  <Text style={styles.statBoxValue}>{stat.systolic.max.toFixed(1)}</Text>
+                                </View>
+                              </View>
+                            </>
+                          )}
+                          {stat.diastolic && (
+                            <>
+                              <Text style={[styles.statLabel, { color: '#4A7BEB' }]}>Diastolique</Text>
+                              <View style={styles.statRow}>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Min</Text>
+                                  <Text style={styles.statBoxValue}>{stat.diastolic.min.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Moyenne</Text>
+                                  <Text style={[styles.statBoxValue, { color: '#4A7BEB' }]}>{stat.diastolic.avg.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Max</Text>
+                                  <Text style={styles.statBoxValue}>{stat.diastolic.max.toFixed(1)}</Text>
+                                </View>
+                              </View>
+                            </>
+                          )}
+                          {stat.legacy && (
+                            <>
+                              <Text style={[styles.statLabel, { color: meta.color }]}>
+                                Anciennes mesures (valeur unique)
+                              </Text>
+                              <View style={styles.statRow}>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Min</Text>
+                                  <Text style={styles.statBoxValue}>{stat.legacy.min.toFixed(1)}</Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Moyenne</Text>
+                                  <Text style={[styles.statBoxValue, { color: meta.color }]}>
+                                    {stat.legacy.avg.toFixed(1)}
+                                  </Text>
+                                </View>
+                                <View style={styles.statBox}>
+                                  <Text style={styles.statBoxLabel}>Max</Text>
+                                  <Text style={styles.statBoxValue}>{stat.legacy.max.toFixed(1)}</Text>
+                                </View>
+                              </View>
+                              <Text style={styles.statCount}>
+                                {stat.legacyCount ?? 0} anciennes mesures
+                              </Text>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <View style={styles.statRow}>
+                          <View style={styles.statBox}>
+                            <Text style={styles.statBoxLabel}>Min</Text>
+                            <Text style={styles.statBoxValue}>{stat.min!.toFixed(1)}</Text>
+                          </View>
+                          <View style={styles.statBox}>
+                            <Text style={styles.statBoxLabel}>Moyenne</Text>
+                            <Text style={[styles.statBoxValue, { color: meta.color }]}>{stat.avg!.toFixed(1)}</Text>
+                          </View>
+                          <View style={styles.statBox}>
+                            <Text style={styles.statBoxLabel}>Max</Text>
+                            <Text style={styles.statBoxValue}>{stat.max!.toFixed(1)}</Text>
+                          </View>
                         </View>
-                        <View style={styles.statBox}>
-                          <Text style={styles.statBoxLabel}>Moyenne</Text>
-                          <Text style={[styles.statBoxValue, { color: meta.color }]}>{stat.avg.toFixed(1)}</Text>
-                        </View>
-                        <View style={styles.statBox}>
-                          <Text style={styles.statBoxLabel}>Max</Text>
-                          <Text style={styles.statBoxValue}>{stat.max.toFixed(1)}</Text>
-                        </View>
-                      </View>
+                      )}
                       <Text style={styles.statUnit}>Unité: {stat.unit}</Text>
                     </BlurView>
                   );

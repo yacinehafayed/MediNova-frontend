@@ -58,7 +58,7 @@ export default function RootLayout() {
       {isDark && (
         <View
           pointerEvents="none"
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
+          style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
         />
       )}
     </>

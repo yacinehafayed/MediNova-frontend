@@ -10,17 +10,25 @@ export type MeasurementType = 'weight' | 'blood_pressure' | 'heart_rate' | 'bloo
 export interface Measurement {
   _id: string;
   type: MeasurementType;
-  value: number;
+  value?: number;
+  systolic?: number;
+  diastolic?: number;
   unit: string;
   date: string;
 }
+
+export type NewMeasurement = {
+  type: MeasurementType;
+  value: number;
+  unit: string;
+};
 
 const API_URL = API_ENDPOINTS.measurements;
 
 interface HealthState {
   measurements: Measurement[];
   isLoading: boolean;
-  addMeasurement: (m: { type: MeasurementType; value: number; unit: string }) => Promise<{ success: boolean; message?: string }>;
+  addMeasurement: (m: NewMeasurement) => Promise<{ success: boolean; message?: string }>;
   deleteMeasurement: (id: string) => Promise<void>;
   loadMeasurements: () => Promise<void>;
 }
@@ -48,7 +56,9 @@ export const useHealthStore = create<HealthState>((set, get) => ({
 
 
       set({ measurements: [data, ...get().measurements] });
-      await useAlertsStore.getState().checkThreshold(m.type, m.value);
+      if (m.type !== 'blood_pressure') {
+        await useAlertsStore.getState().checkThreshold(m.type, m.value);
+      }
       return { success: true };
     } catch (e) {
       return { success: false, message: 'Impossible de contacter le serveur.' };

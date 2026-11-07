@@ -4,7 +4,17 @@ import { useAuthStore } from './auth.store';
 
 export interface ReportData {
   period: { start: string; end: string };
-  stats: Record<string, { unit: string; count: number; min: number; max: number; avg: number }>;
+  stats: Record<string, {
+    unit: string;
+    count: number;
+    min?: number;
+    max?: number;
+    avg?: number;
+    systolic?: { min: number; max: number; avg: number } | null;
+    diastolic?: { min: number; max: number; avg: number } | null;
+    legacy?: { min: number; max: number; avg: number } | null;
+    legacyCount?: number;
+  }>;
   totalMeasures: number;
   totalAnalyses: number;
 }
