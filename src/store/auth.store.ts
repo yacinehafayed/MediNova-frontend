@@ -24,7 +24,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (data: { name: string; email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
+  register: (data: { name: string; email: string; password: string; dateOfBirth: string }) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; message?: string }>;
@@ -56,6 +56,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         name: data.name,
         email: data.email,
         token: data.token,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        height: data.height,
+        weight: data.weight,
         notificationsEnabled: data.notificationsEnabled ?? true,
         remindersEnabled: data.remindersEnabled ?? true,
         biometricEnabled: data.biometricEnabled ?? false,
@@ -84,6 +89,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         name: result.name,
         email: result.email,
         token: result.token,
+        dateOfBirth: result.dateOfBirth,
+        gender: result.gender,
+        height: result.height,
+        weight: result.weight,
         notificationsEnabled: true,
         remindersEnabled: true,
         biometricEnabled: false,
@@ -119,9 +128,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   updateProfile: async (data) => {
     try {
       const currentUser = get().user;
-      if (!currentUser) return { success: false, message: 'Non connecté.' };
 
-      const response = await fetch(`${API_URL}/profile`, {
+      if (!currentUser) {
+        return { success: false, message: 'Non connecté.' };
+      }
+
+      const requestUrl = `${API_URL}/profile`;
+
+      const response = await fetch(requestUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,15 +143,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
         body: JSON.stringify(data),
       });
+
       const result = await response.json();
-      if (!response.ok) return { success: false, message: result.message || 'Erreur.' };
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: result.message || 'Erreur serveur.',
+        };
+      }
 
       const updatedUser: User = { ...currentUser, ...result };
+
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       set({ user: updatedUser });
+
       return { success: true };
+
     } catch (err) {
-      return { success: false, message: 'Erreur réseau.' };
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Erreur réseau.',
+      };
     }
   },
 
@@ -208,6 +235,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         name: data.name,
         email: data.email,
         token: data.token,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        height: data.height,
+        weight: data.weight,
         notificationsEnabled: true,
         remindersEnabled: true,
         biometricEnabled: false,

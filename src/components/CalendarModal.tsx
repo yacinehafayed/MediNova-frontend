@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'rea
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, gradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { colors, darkColors, gradients, darkGradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { useThemeStore } from '@/store/theme.store';
 import { useAppointmentsStore } from '@/store/appointments.store';
 import { useMedicationsStore } from '@/store/medications.store';
 
@@ -11,6 +12,10 @@ const DAYS_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 export default function CalendarModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const isDark = useThemeStore((state) => state.isDark);
+  const palette = isDark ? darkColors : colors;
+  const activeGradients = isDark ? darkGradients : gradients;
+  const styles = createStyles(palette);
   const { appointments, loadAppointments } = useAppointmentsStore();
   const { medications, loadMedications } = useMedicationsStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -33,7 +38,7 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
       type: 'appointment',
       title: `${a.doctor} (${a.specialty})`,
       time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      color: colors.primary,
+      color: palette.primary,
     });
   });
 
@@ -77,11 +82,11 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <LinearGradient colors={gradients.background} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={activeGradients.background} style={StyleSheet.absoluteFill} />
 
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.primaryDeeper} />
+            <Ionicons name="arrow-back" size={24} color={palette.primaryDeeper} />
           </TouchableOpacity>
           <Text style={styles.title}>Calendrier</Text>
           <View style={{ width: 44 }} />
@@ -92,11 +97,11 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
 
           <View style={styles.monthNav}>
             <TouchableOpacity onPress={goToPrevMonth} style={styles.arrowBtn}>
-              <Ionicons name="chevron-back" size={24} color={colors.primaryDeeper} />
+              <Ionicons name="chevron-back" size={24} color={palette.primaryDeeper} />
             </TouchableOpacity>
             <Text style={styles.monthLabel}>{MONTHS[month]} {year}</Text>
             <TouchableOpacity onPress={goToNextMonth} style={styles.arrowBtn}>
-              <Ionicons name="chevron-forward" size={24} color={colors.primaryDeeper} />
+              <Ionicons name="chevron-forward" size={24} color={palette.primaryDeeper} />
             </TouchableOpacity>
           </View>
 
@@ -108,7 +113,7 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
           </View>
 
 
-          <BlurView intensity={40} tint="light" style={styles.calendar}>
+          <BlurView intensity={40} tint={isDark ? "dark" : "light"} style={styles.calendar}>
             <View style={styles.daysGrid}>
               {days.map((day, i) => {
                 if (!day) return <View key={`empty-${i}`} style={styles.dayCell} />;
@@ -138,7 +143,7 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
 
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+              <View style={[styles.legendDot, { backgroundColor: palette.primary }]} />
               <Text style={styles.legendText}>Rendez-vous</Text>
             </View>
             <View style={styles.legendItem}>
@@ -155,7 +160,7 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
             </View>
           ) : (
             eventsByDay[today].map((event, idx) => (
-              <BlurView key={idx} intensity={50} tint="light" style={styles.eventCard}>
+              <BlurView key={idx} intensity={50} tint={isDark ? "dark" : "light"} style={styles.eventCard}>
                 <View style={[styles.eventIcon, { backgroundColor: event.color + '22' }]}>
                   <Ionicons name={event.type === 'appointment' ? 'calendar' : 'medkit'} size={18} color={event.color} />
                 </View>
@@ -172,40 +177,40 @@ export default function CalendarModal({ visible, onClose }: { visible: boolean; 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: typeof colors) => StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg, paddingTop: 60 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center' },
-  title: { ...typography.title, color: colors.primaryDeeper },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surfaceSolid, alignItems: 'center', justifyContent: 'center' },
+  title: { ...typography.title, color: palette.primaryDeeper },
 
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
-  arrowBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center' },
-  monthLabel: { ...typography.subtitle, fontWeight: '800', color: colors.primaryDeeper },
+  arrowBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.surfaceSolid, alignItems: 'center', justifyContent: 'center' },
+  monthLabel: { ...typography.subtitle, fontWeight: '800', color: palette.primaryDeeper },
 
   weekRow: { flexDirection: 'row', marginBottom: spacing.sm },
-  weekDay: { flex: 1, textAlign: 'center', ...typography.caption, fontWeight: '700', color: colors.textMuted },
+  weekDay: { flex: 1, textAlign: 'center', ...typography.caption, fontWeight: '700', color: palette.textMuted },
 
-  calendar: { borderRadius: radius.lg, padding: spacing.md, backgroundColor: 'rgba(255,255,255,0.7)', ...shadows.soft, marginBottom: spacing.md },
+  calendar: { borderRadius: radius.lg, padding: spacing.md, backgroundColor: palette.surface, ...shadows.soft, marginBottom: spacing.md },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
   dayNum: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  dayNumToday: { backgroundColor: colors.primaryDark },
-  dayText: { ...typography.body, color: colors.primaryDeeper, fontWeight: '600' },
+  dayNumToday: { backgroundColor: palette.primaryDark },
+  dayText: { ...typography.body, color: palette.primaryDeeper, fontWeight: '600' },
   dotRow: { flexDirection: 'row', gap: 2, marginTop: 2 },
   eventDot: { width: 4, height: 4, borderRadius: 2 },
 
   legend: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: spacing.lg },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { ...typography.caption, color: colors.textMuted },
+  legendText: { ...typography.caption, color: palette.textMuted },
 
-  sectionTitle: { ...typography.subtitle, fontWeight: '700', color: colors.primaryDeeper, marginBottom: spacing.md },
+  sectionTitle: { ...typography.subtitle, fontWeight: '700', color: palette.primaryDeeper, marginBottom: spacing.md },
 
-  eventCard: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, borderRadius: radius.lg, backgroundColor: 'rgba(255,255,255,0.7)', marginBottom: spacing.sm, ...shadows.soft },
+  eventCard: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, borderRadius: radius.lg, backgroundColor: palette.surface, marginBottom: spacing.sm, ...shadows.soft },
   eventIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  eventTitle: { ...typography.body, fontWeight: '700', color: colors.primaryDeeper },
-  eventTime: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
+  eventTitle: { ...typography.body, fontWeight: '700', color: palette.primaryDeeper },
+  eventTime: { ...typography.caption, color: palette.textMuted, marginTop: 2 },
 
-  emptyCard: { borderRadius: radius.lg, padding: spacing.lg, backgroundColor: 'rgba(255,255,255,0.6)', alignItems: 'center' },
-  emptyText: { ...typography.body, color: colors.textMuted },
+  emptyCard: { borderRadius: radius.lg, padding: spacing.lg, backgroundColor: palette.surface, alignItems: 'center' },
+  emptyText: { ...typography.body, color: palette.textMuted },
 });

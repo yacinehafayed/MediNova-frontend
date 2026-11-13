@@ -84,7 +84,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="alerts"
         options={{
-          href: null,
+          tabBarItemStyle: {
+            display: 'none',
+          },
         }}
       />
     </Tabs>

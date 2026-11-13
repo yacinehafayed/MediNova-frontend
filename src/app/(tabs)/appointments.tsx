@@ -8,8 +8,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import AnimatedView from '@/components/AnimatedView';
-import { colors, gradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { colors, darkColors, gradients, darkGradients, radius, shadows, spacing, typography } from '@/constants/theme';
 import { useAppointmentsStore } from '@/store/appointments.store';
+import { useThemeStore } from '@/store/theme.store';
 
 const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const SPECIALTIES = ['Cardiologie', 'Dermatologie', 'Généraliste', 'Pédiatrie'];
@@ -22,6 +23,11 @@ const TIME_SLOTS = [
 
 export default function Appointments() {
   const store = useAppointmentsStore();
+  const isDark = useThemeStore((s) => s.isDark);
+  const palette = isDark ? darkColors : colors;
+  const activeGradients = isDark ? darkGradients : gradients;
+
+
   const appointments = store.appointments || [];
   const addAppointment = store.addAppointment;
   const deleteAppointment = store.deleteAppointment;
@@ -85,36 +91,36 @@ export default function Appointments() {
   const displayed = activeTab === 'upcoming' ? upcoming : past;
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
-      <LinearGradient colors={gradients.background} style={styles.flex}>
-        <View style={[styles.orb, { bottom: -100, right: -80, width: 280, height: 280 }]} />
+    <SafeAreaView style={[styles.flex, { backgroundColor: palette.bg }]} edges={['top']}>
+    <LinearGradient colors={activeGradients.background} style={styles.flex}>
+      <View style={[ styles.orb, { bottom: -100, right: -80, width: 280, height: 280, backgroundColor: isDark  ? 'rgba(140,185,144,0.10)'  : 'rgba(255,255,255,0.55)', }, ]}/>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           <AnimatedView delay={100} animation="down" style={styles.header}>
             <View>
-              <Text style={styles.headerSubtitle}>Mon agenda</Text>
-              <Text style={styles.headerTitle}>Rendez-vous</Text>
+              <Text style={[styles.headerSubtitle, { color: palette.textMuted }]}>Mon agenda</Text>
+              <Text style={[styles.headerTitle, { color: palette.text }]}>Rendez-vous</Text>
             </View>
-            <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
-              <Ionicons name="add" size={24} color={colors.textOnDark} />
+            <TouchableOpacity style={[ styles.addBtn, isDark && { backgroundColor: palette.primary }, ]} onPress={() => setModalVisible(true)}>
+              <Ionicons name="add" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </AnimatedView>
 
-          <AnimatedView delay={300} animation="up" style={styles.tabsContainer}>
+          <AnimatedView delay={300} animation="up" style={[ styles.tabsContainer, ...(isDark ? [{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.glassBorder, }] : []), ]}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'upcoming' && styles.tabActive]}
+              style={[styles.tab, activeTab === 'upcoming' && { backgroundColor: palette.primaryDark, ...shadows.soft, },]}
               onPress={() => setActiveTab('upcoming')}
             >
-              <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>
+              <Text style={[styles.tabText,  { color: activeTab === 'upcoming' ? '#FFFFFF' : palette.textMuted },]}>
                 À venir ({upcoming.length})
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'past' && styles.tabActive]}
+              style={[styles.tab, activeTab === 'past' && { backgroundColor: palette.primaryDark, ...shadows.soft, },]}
               onPress={() => setActiveTab('past')}
             >
-              <Text style={[styles.tabText, activeTab === 'past' && styles.tabTextActive]}>
+              <Text style={[styles.tabText, { color: activeTab === 'past' ? '#FFFFFF' : palette.textMuted, },]}>
                 Passés ({past.length})
               </Text>
             </TouchableOpacity>
@@ -122,11 +128,11 @@ export default function Appointments() {
 
           {displayed.length === 0 ? (
             <AnimatedView delay={400} animation="fade" style={styles.emptyContainer}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="calendar-outline" size={40} color={colors.primary} />
+              <View style={[ styles.emptyIcon, isDark && { backgroundColor: palette.surface }, ]}>
+                <Ionicons name="calendar-outline" size={40} color={palette.primary} />
               </View>
-              <Text style={styles.emptyText}>Aucun rendez-vous {activeTab === 'upcoming' ? 'à venir' : 'passé'}.</Text>
-              <Text style={styles.emptySub}>Cliquez sur '+' pour planifier une consultation.</Text>
+              <Text style={[styles.emptyText, { color: palette.text }]}>Aucun rendez-vous {activeTab === 'upcoming' ? 'à venir' : 'passé'}.</Text>
+              <Text style={[styles.emptySub, { color: palette.textMuted }]}>Cliquez sur '+' pour planifier une consultation.</Text>
             </AnimatedView>
           ) : (
             displayed.map((a, index) => {
@@ -136,11 +142,11 @@ export default function Appointments() {
 
               return (
                 <AnimatedView key={a._id} delay={400 + index * 80} animation="zoom">
-                  <BlurView intensity={50} tint="light" style={styles.apptCard}>
+                  <BlurView intensity={isDark ? 20 : 50} tint={isDark ? 'dark' : 'light'} style={[ styles.apptCard, isDark && { backgroundColor: palette.surface, borderColor: palette.glassBorder, }, ]}>
                     <View style={styles.cardTop}>
-                      <View style={styles.dateBlock}>
-                        <Text style={styles.dateDay}>{dateObj.getDate()}</Text>
-                        <Text style={styles.dateMonth}>{DAYS[dateObj.getDay()].toUpperCase()}</Text>
+                      <View style={[styles.dateBlock, { backgroundColor: palette.primarySoft },]}>
+                        <Text style={[styles.dateDay, { color: palette.primary }]}>{dateObj.getDate()}</Text>
+                        <Text style={[styles.dateMonth, { color: palette.primary }]}>{DAYS[dateObj.getDay()].toUpperCase()}</Text>
                       </View>
 
                       <View style={{ flex: 1, marginLeft: 16 }}>
@@ -154,10 +160,10 @@ export default function Appointments() {
                             </View>
                           )}
                         </View>
-                        <Text style={styles.doctorName}>{a.doctor}</Text>
+                        <Text style={[styles.doctorName, { color: palette.text }]}>{a.doctor}</Text>
                         <View style={styles.timeRow}>
-                          <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                          <Text style={styles.timeText}>
+                          <Ionicons name="time-outline" size={14} color={palette.textMuted} />
+                          <Text style={[styles.timeText, { color: palette.textMuted }]}>
                             {dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                         </View>
@@ -168,10 +174,10 @@ export default function Appointments() {
                       </TouchableOpacity>
                     </View>
 
-                    <View style={styles.cardBottom}>
+                    <View style={[styles.cardBottom, isDark && { borderTopColor: 'rgba(255,255,255,0.10)', },]}>
                       <View style={styles.locationRow}>
-                        <Ionicons name="location-outline" size={16} color={colors.primary} />
-                        <Text style={styles.locationText}>{a.location}</Text>
+                        <Ionicons name="location-outline" size={16} color={palette.primary} />
+                        <Text style={[styles.locationText, { color: palette.textMuted }]}>{a.location}</Text>
                       </View>
                     </View>
                   </BlurView>
@@ -187,29 +193,27 @@ export default function Appointments() {
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
 
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <View style={styles.modalContent}>
-                <View style={styles.sheetHandle} />
-                <Text style={styles.modalTitle}>Nouveau rendez-vous</Text>
-
+              <View style={[ styles.modalContent, isDark && { backgroundColor: palette.surfaceSolid }, ]}>
+                <Text style={[styles.modalTitle, { color: palette.text }]}>Nouveau rendez-vous</Text>
                 <Text style={styles.inputLabel}>Nom du médecin</Text>
-                <View style={styles.inputWrap}>
+                <View style={[ styles.inputWrap, isDark && { backgroundColor: palette.bgDeep, borderColor: palette.glassBorder, }, ]}>
                   <Ionicons name="person-outline" size={20} color="rgba(255,255,255,0.6)" />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: palette.text }]}
                     placeholder="Ex: Sarah Lee"
-                    placeholderTextColor="rgba(255,255,255,0.4)"
+                    placeholderTextColor={palette.textMuted}
                     value={doctor}
                     onChangeText={setDoctor}
                   />
                 </View>
 
                 <Text style={styles.inputLabel}>Lieu</Text>
-                <View style={styles.inputWrap}>
+                <View style={[ styles.inputWrap, isDark && { backgroundColor: palette.bgDeep, borderColor: palette.glassBorder, }, ]}>
                   <Ionicons name="location-outline" size={20} color="rgba(255,255,255,0.6)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Ex: Clinique du Parc"
-                    placeholderTextColor="rgba(255,255,255,0.4)"
+                    placeholderTextColor={palette.textMuted}
                     value={location}
                     onChangeText={setLocation}
                   />
@@ -220,10 +224,10 @@ export default function Appointments() {
                   {SPECIALTIES.map(s => (
                     <TouchableOpacity
                       key={s}
-                      style={[styles.specChip, specialty === s && styles.specChipActive]}
+                      style={[ styles.specChip, isDark && { backgroundColor: palette.bgDeep, borderWidth: 1, borderColor: palette.glassBorder, }, specialty === s && { backgroundColor: palette.primary },]}
                       onPress={() => setSpecialty(s)}
                     >
-                      <Text style={[styles.specChipText, specialty === s && { color: '#FFF' }]}>{s}</Text>
+                      <Text style={[styles.specChipText, { color: isDark ? palette.text : '#FFFFFF' }, specialty === s && { color: '#FFFFFF' },]}>{s}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -239,11 +243,11 @@ export default function Appointments() {
                     return (
                       <TouchableOpacity
                         key={index}
-                        style={[styles.dateChip, isSelected && styles.dateChipActive]}
+                        style={[ styles.dateChip, isDark && { backgroundColor: palette.bgDeep, borderWidth: 1, borderColor: palette.glassBorder, }, isSelected && { backgroundColor: palette.primary },]}
                         onPress={() => setSelectedDate(d)}
                       >
-                        <Text style={[styles.dateChipDay, isSelected && { color: '#FFF' }]}>{label}</Text>
-                        <Text style={[styles.dateChipNum, isSelected && { color: '#FFF' }]}>{d.getDate()}</Text>
+                        <Text style={[styles.dateChipDay, { color: isDark ? palette.textMuted : 'rgba(255,255,255,0.6)' }, isSelected && { color: '#FFFFFF' },]}>{label}</Text>
+                        <Text style={[styles.dateChipNum, { color: palette.text }, isSelected && { color: '#FFFFFF' },]}>{d.getDate()}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -256,23 +260,23 @@ export default function Appointments() {
                     return (
                       <TouchableOpacity
                         key={time}
-                        style={[styles.timeChip, isSelected && styles.dateChipActive]}
+                        style={[ styles.timeChip, isDark && { backgroundColor: palette.bgDeep, borderWidth: 1, borderColor: palette.glassBorder, }, isSelected && { backgroundColor: palette.primary },]}
                         onPress={() => setSelectedTime(time)}
                       >
-                        <Text style={[styles.timeChipText, isSelected && { color: '#FFF' }]}>{time}</Text>
+                        <Text style={[styles.timeChipText, { color: palette.text }, isSelected && { color: '#FFFFFF' },]}>{time}</Text>
                       </TouchableOpacity>
                     );
                   })}
                 </ScrollView>
 
                 <TouchableOpacity style={styles.modalBtn} onPress={handleAdd}>
-                  <LinearGradient colors={gradients.primary} style={styles.modalBtnInner}>
+                  <LinearGradient colors={activeGradients.primary} style={styles.modalBtnInner}>
                     <Text style={styles.modalBtnText}>Confirmer</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.modalClose} onPress={() => setModalVisible(false)}>
-                  <Text style={styles.modalCloseText}>Annuler</Text>
+                  <Text style={[ styles.modalCloseText, { color: isDark ? palette.textMuted : 'rgba(255,255,255,0.6)' }, ]}>Annuler</Text>
                 </TouchableOpacity>
               </View>
             </KeyboardAvoidingView>
@@ -323,8 +327,7 @@ const styles = StyleSheet.create({
   emptySub: { ...typography.body, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
 
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: colors.primaryDeeper, padding: spacing.xl, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: 50 },
-  sheetHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginBottom: spacing.lg },
+  modalContent: { backgroundColor: colors.primaryDeeper, padding: spacing.xl, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: 20 },
   modalTitle: { ...typography.title, color: '#FFF', marginBottom: spacing.lg },
   inputLabel: { ...typography.caption, color: 'rgba(255,255,255,0.8)', fontWeight: '700', marginBottom: 8, marginLeft: 4 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.md, paddingHorizontal: spacing.md, height: 56, marginBottom: spacing.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },

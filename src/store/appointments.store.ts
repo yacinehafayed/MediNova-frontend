@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from '../config/api';
 import { create } from 'zustand';
 import { useAuthStore } from './auth.store';
+import { useNotificationsStore } from './notifications.store';
 
 export interface Appointment {
   _id: string;
@@ -42,7 +43,12 @@ export const useAppointmentsStore = create<AppointmentState>((set, get) => ({
       if (!response.ok) return { success: false, message: data.message };
 
       set({ appointments: [data, ...get().appointments] });
+      const notificationStore = useNotificationsStore.getState();
+      
+      await notificationStore.checkReminders();
+      await notificationStore.loadNotifications();
       return { success: true };
+
     } catch (e) {
       return { success: false, message: 'Impossible de contacter le serveur.' };
     }
