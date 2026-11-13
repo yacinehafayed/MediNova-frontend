@@ -1,27 +1,45 @@
 export const colors = {
-
   bg: '#E9F0EA',
   bgDeep: '#CFDCCF',
   surface: 'rgba(255,255,255,0.72)',
   surfaceSolid: '#F6FAF6',
   glassBorder: 'rgba(255,255,255,0.85)',
 
-
   primary: '#5E7F63',
   primaryDark: '#2F4A35',
   primaryDeeper: '#16251A',
   primarySoft: '#DCE8DC',
-  accent: '#C6A15B', // touche dorée premium
-
+  accent: '#C6A15B',
 
   text: '#16251A',
   textMuted: '#6B7C6E',
   textOnDark: '#FFFFFF',
 
-
   danger: '#D9534F',
   success: '#4E9F6A',
   info: '#B9C8DC',
+};
+
+export const darkColors = {
+  bg: '#101B15',
+  bgDeep: '#17251C',
+  surface: '#1D2B22',
+  surfaceSolid: '#24352A',
+  glassBorder: 'rgba(255,255,255,0.09)',
+
+  primary: '#8CB990',
+  primaryDark: '#456B4D',
+  primaryDeeper: '#E5EEE5',
+  primarySoft: '#293E30',
+  accent: '#D9B974',
+
+  text: '#E8F0E8',
+  textMuted: '#A4B5A6',
+  textOnDark: '#FFFFFF',
+
+  danger: '#F07873',
+  success: '#78C995',
+  info: '#8FAFD1',
 };
 
 export const gradients = {
@@ -31,9 +49,20 @@ export const gradients = {
   card: ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.55)'] as const,
 };
 
-export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 };
+export const darkGradients = {
+  background: ['#101B15', '#17251C', '#1B2A20'] as const,
+  primary: ['#456B4D', '#263D2D'] as const,
+  gold: ['#D9B974', '#A9823F'] as const,
+  card: ['#24352A', '#1D2B22'] as const,
+};
 
-export const radius = { sm: 12, md: 18, lg: 26, xl: 34, pill: 999 };
+export const spacing = {
+  xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48,
+};
+
+export const radius = {
+  sm: 12, md: 18, lg: 26, xl: 34, pill: 999,
+};
 
 export const typography = {
   display: { fontSize: 34, fontWeight: '700' as const, letterSpacing: -0.8 },
@@ -60,5 +89,9 @@ export const shadows = {
   },
 };
 
-export const theme = { colors, gradients, spacing, radius, typography, shadows };
+export const theme = {
+  colors, darkColors, gradients, darkGradients,
+  spacing, radius, typography, shadows,
+};
+
 export default theme;

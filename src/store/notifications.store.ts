@@ -42,66 +42,84 @@ export const useNotificationsStore = create<NotifState>((set, get) => ({
     } catch (e) {}
   },
 
+  
   markAsRead: async (id) => {
-    set({
-      notifications: get().notifications.map((n) =>
-        n._id === id ? { ...n, read: true } : n
-      ),
-    });
+    const token = useAuthStore.getState().user?.token;
+    if (!token) return;
+
+    const previousNotifications = get().notifications;
+    set({ notifications: previousNotifications.map((n) => n._id === id ? { ...n, read: true } : n ), });
 
     try {
-      const token = useAuthStore.getState().user?.token;
-      if (!token) return;
-
-      const res = await fetch(`${API_URL}/${id}/read`, {
+      const response = await fetch(`${API_URL}/${id}/read`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, },
       });
 
-      if (!res.ok) {
-        set({
-          notifications: get().notifications.map((n) =>
-            n._id === id ? { ...n, read: false } : n
-          ),
-        });
+      if (!response.ok) {
+        set({ notifications: previousNotifications });
+        await get().loadNotifications();
       }
     } catch {
-      set({
-        notifications: get().notifications.map((n) =>
-          n._id === id ? { ...n, read: false } : n
-        ),
-      });
+      set({ notifications: previousNotifications });
+      await get().loadNotifications();
     }
   },
+
 
   markAllAsRead: async () => {
-    set({ notifications: get().notifications.map((n) => ({ ...n, read: true })) });
+    const token = useAuthStore.getState().user?.token;
+    if (!token) return;
+
+    const previousNotifications = get().notifications;
+    set({ notifications: previousNotifications.map((n) => ({ ...n, read: true, })), });
+
     try {
-      const token = useAuthStore.getState().user?.token;
-      if (!token) return;
-      await fetch(`${API_URL}/read-all`, {
+      const response = await fetch(`${API_URL}/read-all`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-    } catch {}
-  },
 
-
-  deleteNotification: async (id) => {
-    // Suppression visuelle immédiate (optimiste)
-    set({ notifications: get().notifications.filter((n) => n._id !== id) });
-
-    try {
-      const token = useAuthStore.getState().user?.token;
-      if (!token) return;
-      await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!response.ok) {
+        set({ notifications: previousNotifications });
+        await get().loadNotifications();
+      }
     } catch {
-      get().loadNotifications();
+      set({ notifications: previousNotifications });
+      await get().loadNotifications();
     }
   },
+
+
+  
+  deleteNotification: async (id) => {
+    const token = useAuthStore.getState().user?.token;
+    if (!token) return;
+
+    const previousNotifications = get().notifications;
+
+    set({ notifications: previousNotifications.filter((n) => n._id !== id), });
+
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        set({ notifications: previousNotifications });
+        await get().loadNotifications();
+      }
+    } catch {
+      set({ notifications: previousNotifications });
+      await get().loadNotifications();
+    }
+  },
+
 
 
   checkReminders: async () => {

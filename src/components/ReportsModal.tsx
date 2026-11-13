@@ -7,7 +7,8 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import * as FileSystem from 'expo-file-system/legacy';
-import { colors, gradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { colors, darkColors, gradients, darkGradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { useThemeStore } from '@/store/theme.store';
 import { useReportsStore } from '@/store/reports.store';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -19,6 +20,10 @@ const METRIC_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function ReportsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const isDark = useThemeStore((state) => state.isDark);
+  const palette = isDark ? darkColors : colors;
+  const activeGradients = isDark ? darkGradients : gradients;
+  const styles = createStyles(palette);
   const { report, loadReport } = useReportsStore();
   const user = useAuthStore((state) => state.user);
   const [period, setPeriod] = useState<'7' | '30' | '90'>('30');
@@ -339,11 +344,11 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <LinearGradient colors={gradients.background} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={activeGradients.background} style={StyleSheet.absoluteFill} />
 
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.primaryDeeper} />
+            <Ionicons name="arrow-back" size={24} color={palette.primaryDeeper} />
           </TouchableOpacity>
           <Text style={styles.title}>Rapports</Text>
           <TouchableOpacity
@@ -393,13 +398,13 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
 
           {!report ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="bar-chart-outline" size={60} color={colors.textMuted} />
+              <Ionicons name="bar-chart-outline" size={60} color={palette.textMuted} />
               <Text style={styles.emptyText}>Chargement du rapport...</Text>
             </View>
           ) : (
             <>
               {/* Aperçu du rapport */}
-              <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+              <LinearGradient colors={activeGradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
                 <Text style={styles.heroLabel}>APERÇU DU RAPPORT</Text>
                 <Text style={styles.heroValue}>
                   {new Date(report.period.start).toLocaleDateString('fr-FR')} → {new Date(report.period.end).toLocaleDateString('fr-FR')}
@@ -426,9 +431,9 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
               ) : (
                 Object.keys(report.stats).map(type => {
                   const stat = report.stats[type];
-                  const meta = METRIC_LABELS[type] || { label: type, color: colors.primary };
+                  const meta = METRIC_LABELS[type] || { label: type, color: palette.primary };
                   return (
-                    <BlurView key={type} intensity={50} tint="light" style={styles.statCard}>
+                    <BlurView key={type} intensity={50} tint={isDark ? "dark" : "light"} style={styles.statCard}>
                       <View style={styles.statHeader}>
                         <View style={[styles.statDot, { backgroundColor: meta.color }]} />
                         <Text style={styles.statLabel}>{meta.label}</Text>
@@ -534,12 +539,12 @@ export default function ReportsModal({ visible, onClose }: { visible: boolean; o
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: typeof colors) => StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg, paddingTop: 60 },
-  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center' },
-  title: { ...typography.title, color: colors.primaryDeeper },
-  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryDark, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surfaceSolid, alignItems: 'center', justifyContent: 'center' },
+  title: { ...typography.title, color: palette.primaryDeeper },
+  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: palette.primaryDark, alignItems: 'center', justifyContent: 'center' },
 
   pdfButton: { borderRadius: radius.lg, overflow: 'hidden', marginBottom: spacing.lg, ...shadows.strong },
   pdfGradient: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, minHeight: 80 },
@@ -547,9 +552,9 @@ const styles = StyleSheet.create({
   pdfSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: 2 },
 
   periodRow: { flexDirection: 'row', gap: 8, marginBottom: spacing.lg },
-  periodChip: { flex: 1, paddingVertical: 12, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.6)', alignItems: 'center' },
-  periodChipActive: { backgroundColor: colors.primaryDark },
-  periodText: { ...typography.caption, fontWeight: '700', color: colors.textMuted },
+  periodChip: { flex: 1, paddingVertical: 12, borderRadius: radius.pill, backgroundColor: palette.surface, alignItems: 'center' },
+  periodChipActive: { backgroundColor: palette.primaryDark },
+  periodText: { ...typography.caption, fontWeight: '700', color: palette.textMuted },
 
   hero: { borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.lg },
   heroLabel: { ...typography.caption, color: '#BFD3C1', letterSpacing: 1.5 },
@@ -560,23 +565,23 @@ const styles = StyleSheet.create({
   heroStatLabel: { ...typography.caption, color: '#CFE0D1', marginTop: 4 },
   heroDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.2)' },
 
-  sectionTitle: { ...typography.subtitle, fontWeight: '700', color: colors.primaryDeeper, marginBottom: spacing.md, marginTop: spacing.md },
+  sectionTitle: { ...typography.subtitle, fontWeight: '700', color: palette.primaryDeeper, marginBottom: spacing.md, marginTop: spacing.md },
 
-  statCard: { borderRadius: radius.lg, padding: spacing.md, backgroundColor: 'rgba(255,255,255,0.7)', marginBottom: spacing.md, ...shadows.soft },
-  statHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
+  statCard: { borderRadius: radius.lg, padding: spacing.md, backgroundColor: palette.surface, marginBottom: spacing.md, ...shadows.soft },
+  statHeader: { flexDirection: 'row', alignItems: 'center'},
   statDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
-  statLabel: { flex: 1, ...typography.subtitle, fontWeight: '700', color: colors.primaryDeeper },
-  statCount: { ...typography.caption, color: colors.textMuted },
+  statLabel: { flex: 1, ...typography.subtitle, fontWeight: '700', color: palette.primaryDeeper, marginBottom: 7,  marginTop: 4 },
+  statCount: { ...typography.caption, color: palette.textMuted },
   statRow: { flexDirection: 'row', gap: 8 },
-  statBox: { flex: 1, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: radius.sm, paddingVertical: 10, alignItems: 'center' },
-  statBoxLabel: { ...typography.caption, color: colors.textMuted, fontSize: 10 },
-  statBoxValue: { fontSize: 18, fontWeight: '800', color: colors.primaryDeeper, marginTop: 2 },
-  statUnit: { ...typography.caption, color: colors.textMuted, marginTop: spacing.sm, textAlign: 'right' },
+  statBox: { flex: 1, backgroundColor: palette.surfaceSolid, borderRadius: radius.sm, paddingVertical: 10, alignItems: 'center' },
+  statBoxLabel: { ...typography.caption, color: palette.textMuted, fontSize: 10 },
+  statBoxValue: { fontSize: 18, fontWeight: '800', color: palette.primaryDeeper, marginTop: 2 },
+  statUnit: { ...typography.caption, color: palette.textMuted, marginTop: spacing.sm, textAlign: 'right' },
 
-  emptyCard: { borderRadius: radius.lg, padding: spacing.lg, backgroundColor: 'rgba(255,255,255,0.6)', alignItems: 'center' },
-  emptyCardText: { ...typography.body, color: colors.textMuted },
+  emptyCard: { borderRadius: radius.lg, padding: spacing.lg, backgroundColor: palette.surface, alignItems: 'center' },
+  emptyCardText: { ...typography.body, color: palette.textMuted },
 
-  disclaimer: { ...typography.caption, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, lineHeight: 18 },
+  disclaimer: { ...typography.caption, color: palette.textMuted, textAlign: 'center', marginTop: spacing.xl, lineHeight: 18 },
   emptyContainer: { alignItems: 'center', marginTop: 80 },
-  emptyText: { ...typography.subtitle, fontWeight: '700', color: colors.primaryDeeper, marginTop: spacing.md },
+  emptyText: { ...typography.subtitle, fontWeight: '700', color: palette.primaryDeeper, marginTop: spacing.md },
 });

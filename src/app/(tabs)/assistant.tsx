@@ -7,9 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, gradients, radius, shadows, spacing, typography } from '@/constants/theme';
+import { colors, darkColors, gradients, darkGradients, radius, shadows, spacing, typography } from '@/constants/theme';
 import { useAIStore } from '@/store/ai.store';
 import { useAuthStore } from '@/store/auth.store';
+import { useThemeStore } from '@/store/theme.store';
+import Markdown from 'react-native-markdown-display';
 
 const { width } = Dimensions.get('window');
 
@@ -21,6 +23,9 @@ export default function Assistant() {
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const isDark = useThemeStore((s) => s.isDark);
+  const palette = isDark ? darkColors : colors;
+  const activeGradients = isDark ? darkGradients : gradients;
 
   useEffect(() => {
     loadMessages();
@@ -64,28 +69,28 @@ export default function Assistant() {
   ];
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
-      <LinearGradient colors={gradients.background} style={styles.flex}>
-        <View style={[styles.orb, { top: -100, left: -80, width: 280, height: 280 }]} />
+    <SafeAreaView style={[styles.flex, { backgroundColor: palette.bg }]} edges={['top']}>
+      <LinearGradient colors={activeGradients.background} style={styles.flex}>
+        <View style={[ styles.orb, { top: -100, left: -80, width: 280, height: 280, backgroundColor: isDark ? 'rgba(143,175,209,0.10)' : 'rgba(255,255,255,0.55)', }, ]}/>
 
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
           {/* HEADER */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <LinearGradient colors={gradients.primary} style={styles.avatarAI}>
+              <LinearGradient colors={activeGradients.primary} style={styles.avatarAI}>
                 <Ionicons name="sparkles" size={20} color="#FFF" />
               </LinearGradient>
               <View>
-                <Text style={styles.headerTitle}>MediNova IA</Text>
+                <Text style={[styles.headerTitle, { color: palette.primaryDeeper }]}>MediNova IA</Text>
                 <View style={styles.statusRow}>
                   <Animated.View style={[styles.statusDot, { transform: [{ scale: pulseAnim }] }]} />
                   <Text style={styles.statusText}>En ligne</Text>
                 </View>
               </View>
             </View>
-            <TouchableOpacity style={styles.menuBtn}>
-              <Ionicons name="ellipsis-horizontal" size={20} color={colors.primaryDark} />
+            <TouchableOpacity style={[styles.menuBtn, isDark && { backgroundColor: palette.surface },]}>
+              <Ionicons name="ellipsis-horizontal" size={20} color={palette.primaryDark} />
             </TouchableOpacity>
           </View>
 
@@ -98,19 +103,19 @@ export default function Assistant() {
           >
             {(!messages || messages.length === 0) && (
               <View style={styles.welcomeContainer}>
-                <LinearGradient colors={gradients.primary} style={styles.welcomeIcon}>
+                <LinearGradient colors={activeGradients.primary} style={styles.welcomeIcon}>
                   <Ionicons name="medical" size={40} color="#FFF" />
                 </LinearGradient>
-                <Text style={styles.welcomeTitle}>Bonjour, je suis MediNova IA</Text>
-                <Text style={styles.welcomeSubtitle}>
+                <Text style={[styles.welcomeTitle, { color: palette.primaryDeeper }]}>Bonjour, je suis MediNova IA</Text>
+                <Text style={[styles.welcomeSubtitle, { color: palette.textMuted }]}>
                   Posez-moi une question sur votre santé, vos symptômes ou vos médicaments. Je suis là pour vous aider.
                 </Text>
 
                 <View style={styles.suggestionsContainer}>
                   {suggestions.map((s, i) => (
-                    <TouchableOpacity key={i} style={styles.suggestionBtn} onPress={() => handleSend(s)}>
-                      <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
-                      <Text style={styles.suggestionText}>{s}</Text>
+                    <TouchableOpacity key={i} style={[ styles.suggestionBtn, isDark && { backgroundColor: palette.surface, borderColor: palette.glassBorder, }, ]} onPress={() => handleSend(s)}>
+                      <Ionicons name="chatbubble-outline" size={16} color={palette.primary} />
+                      <Text style={[styles.suggestionText, { color: palette.primaryDark }]}>{s}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -120,22 +125,45 @@ export default function Assistant() {
             {(messages || []).map((m) => (
               <View key={m.id} style={[styles.msgWrap, m.role === 'user' ? styles.msgUser : styles.msgBot]}>
                 {m.role === 'assistant' && (
-                  <View style={styles.botIcon}>
-                    <Ionicons name="sparkles" size={14} color={colors.primary} />
+                  <View style={[ styles.botIcon, isDark && { backgroundColor: palette.primarySoft }, ]}>
+                    <Ionicons name="sparkles" size={14} color={palette.primary} />
                   </View>
                 )}
-                <BlurView
-                  intensity={m.role === 'user' ? 0 : 40}
-                  tint="light"
+                <BlurView intensity={m.role === 'user' ? 0 : isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'}
                   style={[
                     styles.msgBubble,
                     m.role === 'user' ? styles.bubbleUser : styles.bubbleBot,
-                    m.role === 'user' && { backgroundColor: colors.primaryDark }
+                    m.role === 'user'
+                      ? { backgroundColor: isDark ? '#456B4D' : colors.primaryDark }
+                      : isDark ? {
+                        backgroundColor: palette.surface,
+                        borderColor: palette.glassBorder,
+                      } : {}, 
                   ]}
                 >
-                  <Text style={[styles.msgText, m.role === 'user' ? styles.textUser : styles.textBot]}>
-                    {m.content}
-                  </Text>
+                  {m.role === 'user' ? (
+                    <Text style={[styles.msgText, { color: '#FFFFFF' }]}>
+                      {m.content}
+                    </Text>
+                  ) : (
+                    <Markdown
+                      style={{
+                        body: { color: palette.text, fontSize: 15, lineHeight: 22,},
+                        paragraph: { marginTop: 0, marginBottom: 12,},
+                        strong: { fontWeight: 'bold', color: palette.primaryDeeper,},
+                        em: { fontStyle: 'italic',},
+                        heading1: { color: palette.primaryDeeper, fontSize: 22, fontWeight: 'bold',},
+                        heading2: { color: palette.primaryDeeper, fontSize: 19, fontWeight: 'bold',},
+                        bullet_list: { marginBottom: 8,},
+                        ordered_list: { marginBottom: 8,},
+                        list_item: { marginBottom: 4,},
+                        link: { color: isDark ? '#8FB5FF' : '#356BB5',},
+                        code_inline: { backgroundColor: isDark ? '#293E30' : '#E8EEE8', color: palette.text,},
+                      }}
+                    >
+                      {m.content}
+                    </Markdown>
+                  )}
                 </BlurView>
               </View>
             ))}
@@ -145,8 +173,8 @@ export default function Assistant() {
                 <View style={styles.botIcon}>
                   <Ionicons name="sparkles" size={14} color={colors.primary} />
                 </View>
-                <BlurView intensity={40} tint="light" style={[styles.msgBubble, styles.bubbleBot]}>
-                  <Text style={styles.typingText}>MediNova IA réfléchit...</Text>
+                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[ styles.msgBubble, styles.bubbleBot, isDark && { backgroundColor: palette.surface, borderColor: palette.glassBorder, }, ]}>
+                  <Text style={[styles.typingText, { color: palette.textMuted }]}>MediNova IA réfléchit...</Text>
                 </BlurView>
               </View>
             )}
@@ -154,15 +182,15 @@ export default function Assistant() {
 
 
           <View style={styles.inputContainer}>
-            <BlurView intensity={60} tint="light" style={styles.inputArea}>
+            <BlurView intensity={isDark ? 25 : 60} tint={isDark ? 'dark' : 'light'} style={[ styles.inputArea, isDark && { backgroundColor: palette.surface, borderColor: palette.glassBorder, }, ]}>
               <TouchableOpacity style={styles.attachBtn}>
-                <Ionicons name="add" size={24} color={colors.textMuted} />
+                <Ionicons name="add" size={24} color={palette.textMuted} />
               </TouchableOpacity>
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: palette.text }]}
                 placeholder="Posez votre question..."
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={palette.textMuted}
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -170,14 +198,14 @@ export default function Assistant() {
 
               <TouchableOpacity onPress={() => handleSend()} disabled={!input.trim()}>
                 <LinearGradient
-                  colors={input.trim() ? gradients.primary : ['#E2E8F0', '#CBD5E1']}
+                  colors={ input.trim() ? activeGradients.primary  : isDark  ? ['#35443A', '#29372E']  : ['#E2E8F0', '#CBD5E1']}
                   style={styles.sendBtn}
                 >
                   <Ionicons name="arrow-up" size={20} color="#FFF" />
                 </LinearGradient>
               </TouchableOpacity>
             </BlurView>
-            <Text style={styles.disclaimerText}>
+            <Text style={[styles.disclaimerText, { color: palette.textMuted }]}>
               MediNova IA peut faire des erreurs. Vérifiez les informations importantes.
             </Text>
           </View>

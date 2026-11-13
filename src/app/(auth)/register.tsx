@@ -46,6 +46,7 @@ export default function Register() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [accepted, setAccepted] = useState(false);
@@ -62,7 +63,10 @@ export default function Register() {
 
 
   const onSubmit = async () => {
-    if (!name.trim() || !email.trim() || !password) return setError('Veuillez remplir tous les champs.');
+    if (!name.trim() || !email.trim() || !password || !dateOfBirth.trim()) return setError('Veuillez remplir tous les champs.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return setError('Utilisez le format AAAA-MM-JJ pour la date de naissance.');
+    const parsedDob = new Date(`${dateOfBirth}T00:00:00.000Z`);
+    if (Number.isNaN(parsedDob.getTime()) || parsedDob >= new Date() || parsedDob.toISOString().slice(0, 10) !== dateOfBirth) return setError('Veuillez saisir une date de naissance valide.');
     if (password !== confirm) return setError('Les mots de passe ne correspondent pas.');
     if (!accepted) return setError("Veuillez accepter les conditions d'utilisation.");
 
@@ -72,7 +76,8 @@ export default function Register() {
     const result = await register({
       name: name.trim(),
       email: email.trim().toLowerCase(),
-      password
+      password,
+      dateOfBirth,
     });
 
     setLoading(false);
@@ -103,6 +108,7 @@ export default function Register() {
             <BlurView intensity={50} tint="light" style={styles.card}>
               <Field icon="person-outline" placeholder="Nom complet" value={name} onChangeText={setName} autoCapitalize="words" />
               <Field icon="mail-outline" placeholder="Adresse email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+              <Field icon="calendar-outline" placeholder="Date de naissance (AAAA-MM-JJ)" value={dateOfBirth} onChangeText={setDateOfBirth} />
               <Field icon="lock-closed-outline" placeholder="Mot de passe" value={password} onChangeText={setPassword} secure />
 
               <View style={styles.strengthRow}>

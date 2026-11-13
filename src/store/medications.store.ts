@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from '../config/api';
 import { create } from 'zustand';
 import { useAuthStore } from './auth.store';
+import { useNotificationsStore } from './notifications.store';
 
 export interface TakenRecord {
   date: string;
@@ -14,6 +15,7 @@ export interface Medication {
   description: string;
   dosage: string;
   times: string[];
+  daysOfWeek?: number[];
   startDate: string;
   endDate: string;
   taken: TakenRecord[];
@@ -53,8 +55,14 @@ export const useMedicationsStore = create<MedState>((set, get) => ({
       });
       const result = await res.json();
       if (!res.ok) return { success: false, message: result.message || `Erreur ${res.status}` };
+      
       set({ medications: [result, ...get().medications] });
+      const notificationStore = useNotificationsStore.getState();
+
+      await notificationStore.checkReminders();
+      await notificationStore.loadNotifications();
       return { success: true };
+
     } catch (e: any) {
       return { success: false, message: `Impossible de joindre le serveur` };
     }
